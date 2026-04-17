@@ -51,4 +51,15 @@ public class NseSymbolStore {
     public List<NseSymbol> getAll() {
         return symbols;
     }
+
+    // ⭐ ADD THIS METHOD
+    public String getName(String symbol) {
+        if (symbol == null) return null;
+
+        return symbols.stream()
+                .filter(s -> s.symbol().equalsIgnoreCase(symbol))
+                .map(NseSymbol::name)
+                .findFirst()
+                .orElse(symbol); // fallback
+    }
 }

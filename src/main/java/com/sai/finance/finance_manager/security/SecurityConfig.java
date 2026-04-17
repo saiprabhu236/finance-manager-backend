@@ -26,6 +26,10 @@ public class SecurityConfig {
                         .requestMatchers("/otp/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()          // WebSocket handshake
                         .requestMatchers("/market/**").authenticated()
+                        .requestMatchers("/explore/**").authenticated()
+                        .requestMatchers("/watchlist/**").authenticated()
+                        .requestMatchers("/holdings/**").authenticated()
+                        .requestMatchers("/portfolio/**").authenticated()
                         .requestMatchers("/wallet/**").authenticated()// ⭐ Market Data module
                         .anyRequest().authenticated()
                 )

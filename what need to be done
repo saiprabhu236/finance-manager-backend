@@ -309,3 +309,77 @@ And each category is computed using:
 - Predefined lists (for EV, Infra, Make in India, etc.)
 
 ---
+
+
+
+📌 Stock Detail Page — Backend API Usage
+When the user selects a stock from Explore/Search:
+
+1. Price API
+GET /price?symbol=TCS.NS
+
+Used for:
+
+Live LTP
+
+Change
+
+Percent change
+
+Volume
+
+Market open/close
+
+2. Metrics API
+GET /metrics?symbol=TCS.NS
+
+Used for:
+
+52‑week high/low
+
+Day high/low
+
+Previous close
+
+Market cap (if available)
+
+Volume
+
+Open price
+
+3. History API
+GET /history?symbol=TCS.NS&period=1d|1w|1mo|3mo|1yr|5yr
+
+Used for:
+
+Chart data
+
+Candle data
+
+Timeframe switching
+
+4. Synthetic Tick Engine
+Used for:
+
+Live price updates
+
+Live chart updates
+
+Live depth updates (future)
+
+5. Subscribe / Unsubscribe
+When user opens stock detail page:
+
+POST /subscribe?symbol=TCS.NS
+
+When user closes:
+
+POST /unsubscribe?symbol=TCS.NS
+
+This ensures:
+
+TickEngine only tracks active symbols
+
+No unnecessary Yahoo calls
+
+Efficient backend
