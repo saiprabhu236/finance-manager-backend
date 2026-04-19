@@ -29,33 +29,34 @@ At a high level, the system consists of:
 - **Rate limiting + JWT security** for safe, production‑style access  
 
 ```mermaid
-erDiagram
-    Client[Client (Web / Mobile)] -->|HTTP (REST)| API[Spring Boot REST Controllers]
-    Client -->|WebSocket| WS[WebSocket Endpoint]
+flowchart LR
+    Client["Client Web/Mobile"] -->|HTTP (REST)| API["Spring Boot REST Controllers"]
+    Client -->|WebSocket| WS["WebSocket Endpoint"]
 
-    API --> SVC[Service Layer]
-    WS --> RT[Real-Time Tick Stream]
+    API --> SVC["Service Layer"]
+    WS --> RT["Real-Time Tick Stream"]
 
-    SVC --> MD[Market Data Services]
-    SVC --> ORD[Orders & Trading Engine]
-    SVC --> WAL[Wallet Service]
-    SVC --> HLD[Holdings Service]
-    SVC --> PRT[Portfolio Service]
-    SVC --> EXP[Explore Service]
+    SVC --> MD["Market Data Services"]
+    SVC --> ORD["Orders & Trading Engine"]
+    SVC --> WAL["Wallet Service"]
+    SVC --> HLD["Holdings Service"]
+    SVC --> PRT["Portfolio Service"]
+    SVC --> EXP["Explore Service"]
 
-    MD --> YF[YahooFinanceClient]
-    YF -->|HTTP| Yahoo[(Yahoo Finance API)]
+    MD --> YF["YahooFinanceClient"]
+    YF -->|HTTP| Yahoo["Yahoo Finance API"]
 
-    SVC --> REPO[JPA Repositories]
-    REPO --> DB[(PostgreSQL)]
+    SVC --> REPO["JPA Repositories"]
+    REPO --> DB["PostgreSQL"]
 
     subgraph RealTime
-        MD --> SNAP[SnapshotService]
-        SNAP --> TICK[TickEngine]
+        MD --> SNAP["SnapshotService"]
+        SNAP --> TICK["TickEngine"]
         TICK --> RT
         TICK --> EXP
     end
 ```
+
 
 ---
 
