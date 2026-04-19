@@ -2,11 +2,19 @@ package com.sai.finance.finance_manager.service;
 
 import com.sai.finance.finance_manager.model.Otp;
 import com.sai.finance.finance_manager.repository.OtpRepository;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.core.io.ClassPathResource;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -24,7 +32,7 @@ public class OtpService {
     private final Map<String, Long> otpTimestamps = new HashMap<>();
 
     // Generate + save + send OTP with cooldown + expiry
-    public String generateAndSendOtp(String email) {
+    public String generateAndSendOtp(String email,String name) {
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -59,7 +67,8 @@ public class OtpService {
         otpRepository.save(otpEntity);
 
         // Send email
-        sendOtpEmail(email, otpCode);
+        sendOtpEmail(email, "name", otpCode);
+
 
         return "OTP sent to " + email;
     }
@@ -92,11 +101,44 @@ public class OtpService {
     }
 
     // Send email
-    private void sendOtpEmail(String toEmail, String otp) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("Your OTP Code");
-        message.setText("Your OTP is: " + otp + "\n\nThis OTP is valid for 2 minutes.");
-        mailSender.send(message);
+    public void sendOtpEmail(String toEmail, String name, String otp) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("Your TradeFlux Email Verification Code");
+
+            String htmlContent = loadOtpTemplate(name, otp);
+            helper.setText(htmlContent, true);
+
+            // Inline logo
+            helper.addInline(
+                    "tradefluxLogo",
+                    new ClassPathResource("static/images/tradeflux_logo.png")
+            );
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send OTP email", e);
+        }
     }
+
+
+    public String loadOtpTemplate(String name, String otp) {
+        try {
+            ClassPathResource resource =
+                    new ClassPathResource("templates/email/otp_template.html");
+
+            String html = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            html = html.replace("{{name}}", name);
+            html = html.replace("{{otp}}", otp);
+
+            return html;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load OTP email template", e);
+        }
+    }
+
 }

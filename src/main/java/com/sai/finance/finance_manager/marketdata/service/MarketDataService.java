@@ -38,8 +38,6 @@ public class MarketDataService {
 
     // SEARCH
     public List<SearchResultDto> searchStocks(String query) {
-        log.info("Searching for: {}", query);
-        symbolStore.search(query).forEach(s -> log.info("Match: {} - {}", s.symbol(), s.name()));
         return symbolStore.search(query).stream()
                 .map(s -> new SearchResultDto(s.symbol(), s.name()))
                 .toList();
@@ -48,27 +46,35 @@ public class MarketDataService {
     // CURRENT PRICE (synthetic tick + real)
     public PriceDto getCurrentPrice(String rawSymbol) {
 
-        String symbol = subscriptionManager.normalizeSymbol(rawSymbol);
+        // INTERNAL SYMBOL = NSE format (TCS, INFY, etc.)
+        String symbol = rawSymbol.toUpperCase().trim();
 
         snapshotService.ensureSymbolTracked(symbol);
         SymbolState state = snapshotService.getState(symbol);
 
         MarketStatus status = marketStatusService.getCurrentStatus();
 
-        // 1️⃣ Always fetch from Yahoo when market is CLOSED
+        // Market CLOSED → fetch from Yahoo
         if (status != MarketStatus.OPEN) {
 
-            PriceDto yahoo = yahooFinanceClient.getCurrentPrice(symbol);
+            String yahooSymbol = SymbolMapper.toYahooSymbol(symbol); // TCS -> TCS.NS
+            PriceDto yahoo = yahooFinanceClient.getCurrentPrice(yahooSymbol);
 
             if (yahoo != null && yahoo.getCurrentPrice() > 0) {
-                return yahoo;
+                return new PriceDto(
+                        symbol,
+                        yahoo.getCurrentPrice(),
+                        yahoo.getCurrentPrice(),
+                        0.0,
+                        0.0
+                );
             }
 
             // fallback to snapshot
             double lastClose = state.getClose();
 
             return new PriceDto(
-                    symbol.replace(".NS", ""),
+                    symbol,
                     lastClose,
                     lastClose,
                     0.0,
@@ -76,7 +82,7 @@ public class MarketDataService {
             );
         }
 
-        // 2️⃣ Market OPEN → use tick + real
+        // Market OPEN → use synthetic tick + last real
         double real = state.getLastRealPrice();
         double tick = state.getLastTickPrice() > 0 ? state.getLastTickPrice() : real;
 
@@ -84,7 +90,7 @@ public class MarketDataService {
         double changePct = real != 0 ? (change / real) * 100 : 0;
 
         return new PriceDto(
-                symbol.replace(".NS", ""),
+                symbol,
                 tick,
                 real,
                 change,
@@ -104,10 +110,8 @@ public class MarketDataService {
         return yahooFinanceClient.fetchHistorical(yahooSymbol, range, interval);
     }
 
-    // METRICS (snapshot only)
+    // METRICS
     public StockMetricsDto getStockMetrics(String symbol) {
-
-        //String normalized = subscriptionManager.normalizeSymbol(symbol);
         String yahooSymbol = SymbolMapper.toYahooSymbol(symbol);
         return yahooFinanceClient.fetchMetrics(yahooSymbol);
     }
@@ -133,5 +137,10 @@ public class MarketDataService {
         if (!symbol.endsWith(".NS")) {
             throw new IllegalArgumentException("Symbol must be normalized (e.g., TCS.NS)");
         }
+    }
+
+    public double getLtp(String symbol) {
+        PriceDto price = getCurrentPrice(symbol);
+        return price.getCurrentPrice();
     }
 }

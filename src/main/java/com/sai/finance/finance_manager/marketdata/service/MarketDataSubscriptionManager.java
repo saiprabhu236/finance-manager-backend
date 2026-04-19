@@ -18,27 +18,15 @@ public class MarketDataSubscriptionManager {
     /**
      * Normalize symbol:
      * - Uppercase
-     * - Remove duplicate .NS
-     * - Append .NS if missing
+     * - Trim spaces
+     * (NO .NS logic — your system uses raw symbols like TCS, INFY)
      */
     public String normalizeSymbol(String symbol) {
         if (symbol == null || symbol.isBlank()) {
             return null;
         }
 
-        symbol = symbol.toUpperCase().trim();
-
-        // Remove accidental double suffix
-        if (symbol.endsWith(".NS.NS")) {
-            symbol = symbol.replace(".NS.NS", ".NS");
-        }
-
-        // Append .NS if missing
-        if (!symbol.endsWith(".NS")) {
-            symbol = symbol + ".NS";
-        }
-
-        return symbol;
+        return symbol.toUpperCase().trim();
     }
 
     /**
@@ -51,12 +39,6 @@ public class MarketDataSubscriptionManager {
         }
 
         String normalized = normalizeSymbol(rawSymbol);
-
-        // Remove all variants to avoid duplicates
-        subscribedSymbols.remove(rawSymbol.toUpperCase());
-        subscribedSymbols.remove(rawSymbol);
-        subscribedSymbols.remove(normalized.replace(".NS", ""));
-        subscribedSymbols.remove(normalized + ".NS");
 
         boolean added = subscribedSymbols.add(normalized);
 

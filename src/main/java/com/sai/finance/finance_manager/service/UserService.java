@@ -100,7 +100,7 @@ public class UserService {
         repo.save(user);
 
         // SEND OTP
-        otpService.generateAndSendOtp(request.getEmail());
+        otpService.generateAndSendOtp(request.getEmail(), request.getName());
 
         return "Registration successful. OTP sent to email for verification.";
     }
@@ -163,7 +163,11 @@ public class UserService {
             throw new RuntimeException("Email not found");
         }
 
-        otpService.generateAndSendOtp(email);
+        User user = repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        otpService.generateAndSendOtp(email, user.getName());
+
         return "OTP sent to your email for password reset.";
     }
     public String verifyResetOtp(String email, String otp) {
@@ -211,6 +215,7 @@ public class UserService {
     }
 
     public String resendOtp(String email) {
+
         User user = repo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email not found"));
 
@@ -218,6 +223,13 @@ public class UserService {
             throw new RuntimeException("User is already verified.");
         }
 
-        return otpService.generateAndSendOtp(email); // reuse existing method
+        return otpService.generateAndSendOtp(email, user.getName());
     }
+
+    public String getUserNameByEmail(String email) {
+        return repo.findByEmail(email)
+                .map(User::getName)
+                .orElse("User");
+    }
+
 }

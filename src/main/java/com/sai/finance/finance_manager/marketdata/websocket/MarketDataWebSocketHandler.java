@@ -3,7 +3,6 @@ package com.sai.finance.finance_manager.marketdata.websocket;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sai.finance.finance_manager.marketdata.service.MarketDataSubscriptionManager;
-import com.sai.finance.finance_manager.marketdata.util.SymbolMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,79 +31,53 @@ public class MarketDataWebSocketHandler implements WebSocketHandler {
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
         try {
             String payload = message.getPayload().toString();
-            log.debug("Received message from {}: {}", session.getId(), payload);
-
             JsonNode root = objectMapper.readTree(payload);
-            String action = root.path("action").asText(null);
 
-            if (action == null) {
-                log.warn("Missing action in message from {}", session.getId());
-                return;
-            }
+            String action = root.path("action").asText(null);
+            if (action == null) return;
 
             action = action.toLowerCase();
 
-            // Collect symbols from "symbol" and/or "symbols"
+            // Collect NSE symbols
             Set<String> symbols = new HashSet<>();
 
             if (root.hasNonNull("symbol")) {
-                String symbol = root.get("symbol").asText();
-                symbols.add(symbol);
+                symbols.add(root.get("symbol").asText().toUpperCase().trim());
             }
 
             if (root.has("symbols") && root.get("symbols").isArray()) {
                 for (JsonNode node : root.get("symbols")) {
                     if (node.isTextual()) {
-                        symbols.add(node.asText());
+                        symbols.add(node.asText().toUpperCase().trim());
                     }
                 }
             }
 
-            if (symbols.isEmpty()) {
-                log.warn("No symbols provided in message from {}", session.getId());
-                return;
-            }
-
-            // Convert to Yahoo symbols (TCS -> TCS.NS)
-            Set<String> yahooSymbols = new HashSet<>();
-            for (String s : symbols) {
-                String yahoo = SymbolMapper.toYahooSymbol(s);
-                if (yahoo != null) {
-                    yahooSymbols.add(yahoo);
-                }
-            }
-
-            if (yahooSymbols.isEmpty()) {
-                log.warn("No valid symbols after mapping for session {}", session.getId());
-                return;
-            }
+            if (symbols.isEmpty()) return;
 
             if (action.equals("subscribe")) {
-                for (String yahoo : yahooSymbols) {
-                    sessionSubscriptionManager.subscribe(session.getId(), yahoo);
-                    subscriptionManager.subscribe(yahoo); // global
+                for (String sym : symbols) {
+                    sessionSubscriptionManager.subscribe(session.getId(), sym);
+                    subscriptionManager.subscribe(sym);
                 }
-                log.info("Session {} subscribed to {}", session.getId(), yahooSymbols);
+                log.info("Session {} subscribed to {}", session.getId(), symbols);
 
             } else if (action.equals("unsubscribe")) {
-                for (String yahoo : yahooSymbols) {
-                    sessionSubscriptionManager.unsubscribe(session.getId(), yahoo);
-                    subscriptionManager.unsubscribe(yahoo); // global
+                for (String sym : symbols) {
+                    sessionSubscriptionManager.unsubscribe(session.getId(), sym);
+                    subscriptionManager.unsubscribe(sym);
                 }
-                log.info("Session {} unsubscribed from {}", session.getId(), yahooSymbols);
-
-            } else {
-                log.warn("Unknown action '{}' from {}", action, session.getId());
+                log.info("Session {} unsubscribed from {}", session.getId(), symbols);
             }
 
         } catch (Exception e) {
-            log.error("Error handling message from {}: {}", session.getId(), e.getMessage());
+            log.error("Error handling message: {}", e.getMessage());
         }
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
-        log.error("WebSocket error for {}: {}", session.getId(), exception.getMessage());
+        log.error("WebSocket error: {}", exception.getMessage());
     }
 
     @Override
@@ -119,7 +92,6 @@ public class MarketDataWebSocketHandler implements WebSocketHandler {
         return false;
     }
 
-    // Keep this as you had it
     public void broadcastPrice(com.sai.finance.finance_manager.marketdata.dto.PriceDto dto) {
         broadcaster.broadcastPrice(dto);
     }

@@ -15,6 +15,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtFilter jwtFilter;
+    @Autowired
+    private RateLimitFilter rateLimitFilter;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -30,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/watchlist/**").authenticated()
                         .requestMatchers("/holdings/**").authenticated()
                         .requestMatchers("/portfolio/**").authenticated()
+                        .requestMatchers("/orders/**").authenticated()
                         .requestMatchers("/wallet/**").authenticated()// ⭐ Market Data module
                         .anyRequest().authenticated()
                 )
@@ -37,6 +41,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
+        http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
