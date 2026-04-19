@@ -19,14 +19,18 @@ public class OtpController {
     @Autowired
     private UserService userService;
 
-    // Send OTP (with cooldown + expiry handled in service)
+    // Send OTP
     @PostMapping("/send")
     public ResponseEntity<?> sendOtp(@RequestParam String email) {
-        String result = otpService.generateAndSendOtp(email);
+
+        String name = userService.getUserNameByEmail(email);
+
+        String result = otpService.generateAndSendOtp(email, name);
+
         return ResponseEntity.ok(Map.of("message", result));
     }
 
-    // Verify OTP (DB-based)
+    // Verify OTP
     @PostMapping("/verify")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
 
@@ -37,7 +41,6 @@ public class OtpController {
                     .body(Map.of("message", "Invalid or expired OTP"));
         }
 
-        // Mark user as verified
         userService.markUserVerified(request.getEmail());
 
         return ResponseEntity.ok(
@@ -45,10 +48,14 @@ public class OtpController {
         );
     }
 
-    // Resend OTP (same as send)
+    // Resend OTP
     @PostMapping("/resend")
     public ResponseEntity<?> resendOtp(@RequestParam String email) {
-        String result = otpService.generateAndSendOtp(email);
+
+        String name = userService.getUserNameByEmail(email);
+
+        String result = otpService.generateAndSendOtp(email, name);
+
         return ResponseEntity.ok(Map.of("message", result));
     }
 }

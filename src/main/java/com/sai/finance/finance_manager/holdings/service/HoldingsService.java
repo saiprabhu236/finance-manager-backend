@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -175,4 +176,17 @@ public class HoldingsService {
 
         return list;
     }
+
+    @Transactional(readOnly = true)
+    public double getHoldingQuantity(String userId, String symbol) {
+        return holdingsRepository.findByUserIdAndSymbol(userId, symbol)
+                .map(Holding::getQuantity)
+                .orElse(0.0);
+    }
+
+    public Set<String> getAllOwnedSymbols() {
+        return holdingsRepository.findAllSymbolsOwnedByAnyUser();
+    }
+
+
 }
