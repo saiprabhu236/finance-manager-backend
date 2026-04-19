@@ -20,9 +20,9 @@ The goals of this architecture are:
 ## 2. High‑level system architecture
 
 ```mermaid
-flowchart TB
-    Client["Client Web/Mobile"] -->|HTTP(REST)| API["Spring Boot REST Controllers"]
-    Client -->|WebSocket| WS["WebSocket Endpoint"]
+flowchart LR
+    Client["Client Web/Mobile"] -->|"HTTP (REST)"| API["Spring Boot REST Controllers"]
+    Client -->|"WebSocket"| WS["WebSocket Endpoint"]
 
     API --> SVC["Service Layer"]
     WS --> RT["Real-Time Tick Stream"]
@@ -35,7 +35,7 @@ flowchart TB
     SVC --> EXP["Explore Service"]
 
     MD --> YF["YahooFinanceClient"]
-    YF -->|HTTP| Yahoo["Yahoo Finance API"]
+    YF -->|"HTTP"| Yahoo["Yahoo Finance API"]
 
     SVC --> REPO["JPA Repositories"]
     REPO --> DB["PostgreSQL"]
@@ -47,6 +47,7 @@ flowchart TB
         TICK --> EXP
     end
 ```
+
 
 ---
 
