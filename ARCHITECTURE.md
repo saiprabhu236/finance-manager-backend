@@ -21,7 +21,7 @@ The goals of this architecture are:
 
 ```mermaid
 flowchart TB
-    Client["Client Web/Mobile"] -->|HTTP (REST)| API["Spring Boot REST Controllers"]
+    Client["Client Web/Mobile"] -->|HTTP(REST)| API["Spring Boot REST Controllers"]
     Client -->|WebSocket| WS["WebSocket Endpoint"]
 
     API --> SVC["Service Layer"]
