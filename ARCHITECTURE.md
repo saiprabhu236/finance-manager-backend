@@ -20,7 +20,7 @@ The goals of this architecture are:
 ## 2. High‑level system architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     Client["Client Web/Mobile"] -->|HTTP (REST)| API["Spring Boot REST Controllers"]
     Client -->|WebSocket| WS["WebSocket Endpoint"]
 
